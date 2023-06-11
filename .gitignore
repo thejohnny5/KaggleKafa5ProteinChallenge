@@ -1,0 +1,7 @@
+.idea/*
+tmp_results/*
+tmp/*
+ncbi-blast-2.14/*
+.DS_Store
+Data/*
+.ipynb_checkpoints/*
