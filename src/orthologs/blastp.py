@@ -33,46 +33,50 @@ def query_db(db: str, fasta_query: str, tol: float = 1e-30, max_results: int = 1
     return filter_df(df)
 
 
-class Parellelize:
-    def __init__(self, fasta_file: str, chunck_size: int=100):
+class ChunkBlastP:
+    """Break and run blastP in small chunks"""
+    def __init__(self, fasta_file: str, chunck_size: int=100, chunk_directory: str="./tmp/", results_directory: str="./tmp_results/"):
         """Read fasta file. Break up into chunks of files."""
         self.fasta_file = fasta_file
         self.chunk_size = chunck_size
         self.fastas: list[str] = []
-        self.results_dir: str = "./tmp_results/"
+        self.chunk_directory = chunk_directory
+        self.results_dir = results_directory
         self.results: list[str] = []
         
     
-    def run(self, from_directory: str="./tmp/"):
+    def run(self):
+        from_directory = self.chunk_directory
         #Try load from temp if no files - prepare fasta. Then call _run
         if (not os.path.isdir(from_directory)) or os.listdir(from_directory)==[]:
             print("Splitting...")
             self.prepare_fasta(tmp_directory=from_directory)
             print("Finished Splitting!")
+        
+        #Load fastas from split directory
         self.fastas = self.load_from_temp(from_directory)
+        #Load results from results directory
         self.results = self.load_from_temp(self.results_dir)
-        print(self.fastas)
-        print(self.results)
-        to_run = [file for file in self.fastas if file not in self.results]
+       
+        to_run = [file for file in self.fastas if file not in self.results] #Run those which don't exist in results directory
         to_run_full_path = [f"{from_directory}/{i}" for i in to_run]
-        for i, fasta in enumerate(to_run_full_path):
-            print(f"Running {i+1}/{len(to_run_full_path)}")
-            now = time.time()
-            self._run(fasta)
-            post = time.time()
-            print(f"Time elapsed: {post-now}")
+
+        self._run_all(to_run_full_path)
+        
 
             
 
-    def load_from_temp(self, tmp_directory: str = "./tmp/") -> list[str]:
+    def load_from_temp(self, directory: str) -> list[str]:
+        
         """Properties of temp files should be that they can be converted to int"""
         try:
-            return [int(i) for i in os.listdir(tmp_directory)]
+            return [int(i) for i in os.listdir(directory)]
         except:
             Exception("Type error")
         #return [f"{tmp_directory}/{file}" for file in files]
 
-    def prepare_fasta(self, tmp_directory: str = "./tmp/") -> None:
+    def prepare_fasta(self) -> None:
+        tmp_directory = self.chunk_directory
         """Read fasta and break into chunks"""
         directory_save = tmp_directory
         chunk_num: int = 0
@@ -89,6 +93,7 @@ class Parellelize:
         
     
     def _write_line(self, file_name: str, line: str) -> None:
+        """Write a single line to specified file"""
         with open(file_name, "a") as f:
             f.write(line)
             f.close()
@@ -98,10 +103,20 @@ class Parellelize:
         file_name = os.path.split(fasta_file)[-1]
         df.to_csv(os.path.join(self.results_dir, file_name), index=False)
 
+    def _runall(self, full_path_fastas: list[str]) -> None:
+        """Run all fasta querries from a list of paths to each fasta file"""
+        for i, fasta in enumerate(full_path_fastas):
+            print(f"Running {i+1}/{len(full_path_fastas)}")
+            now = time.time()
+            self._run(fasta)
+            post = time.time()
+            print(f"Time elapsed: {post-now}")
+
+            
 if __name__ == "__main__":
     make_blastp_db(TRAIN_FASTA)
     #df = query_db(TRAIN_FASTA, TRAIN_FASTA)
     #df.to_csv("query_results.csv", header=False)
   
-    par = Parellelize(TRAIN_FASTA)
+    par = ChunkBlastP(TRAIN_FASTA)
     par.run()
