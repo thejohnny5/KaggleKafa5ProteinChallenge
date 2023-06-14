@@ -5,9 +5,11 @@ from typing import List, Optional
 import numpy as np
 from enum import Enum
 from Bio import Entrez
+import json
 
 #PARAMS
-Entrez.email = "johnny5jg5@gmail.com"
+ENTREZ_PARAMS = json.load(open("./src/data/entrez.params.json"))
+Entrez.email = ENTREZ_PARAMS["email"]
 
 class GONamespace(Enum):
     BIOLOGICAL_PROCESS="biological_process"
@@ -48,20 +50,9 @@ class GOTerm:
     replaced_by: Optional[List[str]] = field(default_factory=list)
 
     def __str__(self) -> None:
-        print(self.id)
-        print(self.name)
-        print(self.namespace)
-        print(self.definition)
-        print(self.comment)
-        print(self.is_obsolete)
-        print(self.synonym)
-        print(self.is_a)
-        print(self.consider)
-        print(self.alt_id)
-        print(self.subset)
-        print(self.xref)
-        print(self.relationship)
-        print(self.replaced_by)
+        print(f"ID: {self.id}")
+        print(f"Name: {self.name}")
+        print(f"Namespace: {self.namespace}")
 
 @dataclass
 class Embeds:

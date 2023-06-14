@@ -15,6 +15,7 @@ GO_KEYWORDS: dict[str, str] = {
     "comment":"comment",
     "is_obsolete":"is_obsolete"
     }
+
 GO_KEYWORDS_FOR_LISTS: dict[str, str] = {
     "synonym":"synonym",
     "consider":"consider",
@@ -25,13 +26,6 @@ GO_KEYWORDS_FOR_LISTS: dict[str, str] = {
     "relationship":"relationship",
     "replaced_by":"replaced_by"
     }
-
-def load_numpy(path: str) -> np.array:
-    """Load from .npy file"""
-    return np.load(path)
-
-
-
 
 
 class OBOParser:
@@ -94,7 +88,7 @@ def parse_GO(obo_file: str) -> List[GOTerm]:
     :param v: specifies verbose printing of missing keywords"""
     with open(obo_file, "r") as f:
         data: List[dict[str, str]] = []
-        parser = OBOParser()
+        parser = OBOParser() #Initialize parser
         start_parse = False
         while line := f.readline():
             if not line.strip() and start_parse:
