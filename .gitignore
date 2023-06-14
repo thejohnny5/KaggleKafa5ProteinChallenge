@@ -1,7 +1,9 @@
-.idea/*
-tmp_results/*
-tmp/*
-ncbi-blast-2.14/*
+.idea/
+tmp_results/
+tmp/
+ncbi-blast-2.14/
 .DS_Store
-Data/*
-.ipynb_checkpoints/*
+Competition_data/
+.ipynb_checkpoints/
+__pycache__/
+entrez.params.json
