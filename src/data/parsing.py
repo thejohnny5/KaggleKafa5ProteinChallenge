@@ -1,7 +1,7 @@
 import numpy as np
-from src.data_load import GOTerm
+from src.data.data_load import GOTerm
 from typing import List
-from src.data_load import GO_NAMESPACE_MAP
+from src.data.data_load import GO_NAMESPACE_MAP
 
 class InvalidNamespace(Exception):pass
 

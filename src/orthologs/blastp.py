@@ -7,6 +7,7 @@ import time
 
 TRAIN_FASTA = "./Data/cafa5protein/Train/train_sequences.fasta"
 PATH_TO_NCBI_BIN = "./ncbi-blast-2.14/bin/"
+
 def make_blastp_db(input_file: str) -> None:
     """Create blastdb in same directory as input file"""
     command = NcbimakeblastdbCommandline(cmd=PATH_TO_NCBI_BIN + "makeblastdb", dbtype="prot", input_file=input_file)
@@ -98,7 +99,7 @@ class Parellelize:
         df.to_csv(os.path.join(self.results_dir, file_name), index=False)
 
 if __name__ == "__main__":
-    #make_blastp_db(TRAIN_FASTA)
+    make_blastp_db(TRAIN_FASTA)
     #df = query_db(TRAIN_FASTA, TRAIN_FASTA)
     #df.to_csv("query_results.csv", header=False)
   
