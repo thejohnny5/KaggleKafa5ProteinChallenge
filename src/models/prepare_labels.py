@@ -9,7 +9,7 @@ def convert_2d_to_1d_cols(df: pd.DataFrame) -> pd.DataFrame:
     df.columns = cols
     return df
 
-def prepare_labels(terms: pd.DataFrame[str, str], labels_to_include: list[str]) -> pd.DataFrame:
+def prepare_labels(terms: pd.DataFrame, labels_to_include: list[str]) -> pd.DataFrame:
     """Prepare a multilabel dataset based on certain labels to include
     Expects that the terms dataframe contains protein name in column 0 and go term in column 1
     returns shape of [x, N] where N is the number of labels to include and x is the number of unique protein IDs"""

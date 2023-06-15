@@ -54,6 +54,14 @@ class GOTerm:
         print(f"Name: {self.name}")
         print(f"Namespace: {self.namespace}")
 
+def load_embeds_to_df(path_to_embeds: str, path_to_embed_labels: str) -> pd.DataFrame:
+    """Load embeds into a dataframe where the indexes are the labels"""
+    embed = np.load(path_to_embeds)
+    labels = np.load(path_to_embed_labels)
+    embeds_df = pd.DataFrame(embed)
+    embeds_df.index = labels
+    return embeds_df
+
 @dataclass
 class Embeds:
     """Embeddings with ids for proteins"""

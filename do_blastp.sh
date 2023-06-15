@@ -4,7 +4,7 @@ read -p 'Number of threads (or cores) to use: ' THREADS
 echo "Threads selected $THREADS"
 SPLIT_FASTAS="./tmp/*"
 RESULTS="$(ls ./tmp_results/*)"
-DB="./Data/cafa5protein/Train/train_sequences.fasta"
+DB="./Competition_data/cafa5protein/Train/train_sequences.fasta"
 EVALUE="1e-10"
 MAX_RESULTS="100"
 
