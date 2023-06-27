@@ -13,7 +13,7 @@ cursor.execute('''
         model_md5 TEXT,
         model_params TEXT,
         model_type TEXT,
-        created_on DATETIME,
+        created_on TIMESTAMP,
         CONSTRAINT unique_model_md5 UNIQUE (model_md5)
 
     )

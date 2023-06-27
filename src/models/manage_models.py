@@ -1,77 +1,101 @@
-import json
-import pandas as pd
-import sqlite3
-import joblib
+import pickle
+import hashlib
 from datetime import datetime
-"""
-Connect to database
-Check if entry exists
-Save Model using joblib
-Save model params as metadata
-"""
-class InvalidModel(Exception): pass
+from sqlalchemy import create_engine, Column, Integer, String, DateTime, LargeBinary
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
+import pandas as pd
+Base = declarative_base()
 
-class DBHandler:
-    def __init__(self, db_local: str) -> None:
-        self.db_local = db_local
-        self.db_conn = None
-        self.db_cursor = None
+class Model(Base):
+    __tablename__ = 'model'
 
-    def __enter__(self):
-        # This ensure, whenever an object is created using "with"
-        # this magic method is called, where you can create the connection.
-        self.db_conn = sqlite3.connect(**self.db_local)
-        self.db_cursor = self.db_conn.cursor()
-        return self
+    id = Column(Integer, primary_key=True)
+    model_data = Column(LargeBinary)
+    model_md5 = Column(String)
+    model_params = Column(String)
+    model_type = Column(String)
+    created_on = Column(DateTime)
 
-    def __exit__(self, exception_type, exception_val, trace) -> None:
-        # once the with block is over, the __exit__ method would be called
-        # with that, you close the connnection
-        try:
-           self.db_cursor.close()
-           self.db_conn.close()
-        except AttributeError: # isn't closable
-           AttributeError("Not Closable")
-           return True # exception handled successfully
-
-    def get_row(self, sql: str, data = None) -> dict:
-        self.db_cursor.execute(sql)
-        self.resultset = self.db_cursor.fetchall()
-        return self.resultset
-    
-    def write_row(self, sql: str, data: tuple) -> str:
-        self.db_cursor.execute(sql, data)
-        self.db_conn.commit()
-        return self.db_cursor.lastrowid
-
+class InvalidModel(Exception):
+    pass
 
 class ModelHandler:
+    def __init__(self) -> None:
+        self.model: object = None
+        self.classname: str = None
+        self.name: str = None
+        self.model_params: str = None
 
-    def __init__(self, model: object, name: str) -> None:
-        self.model = model
+    def set_model(self, model: object, name: str) -> None:
         self.classname = model.__class__.__name__
+        self.model = model
         self.name = name
-        self._save()
         self.model_params = self._get_params()
-    
-    def _save(self) -> None:
-        """Saves model as joblib serialized model"""
-        joblib.dump(self.model, self.name + ".joblib")
+
+    def _save(self) -> bytes:
+        """Saves model as pickled object"""
+        return pickle.dumps(self.model)
+
     def _get_params(self) -> dict:
         try:
             return self.model.get_params()
         except InvalidModel:
-            InvalidModel("Model does not support get_params() method.")
-    def write_to_db(self, db: str) -> None:
-        sql_line = """
-        INSERT INTO model(model_data, model_md5, model_params, model_type, created_on)
-        VALUES(?,?,?,?,?)
-        """
-        line = ()
+            raise InvalidModel("Model does not support get_params() method.")
 
-        with DBHandler(db) as f:
-            f.write_row()
+    def _hash(self) -> str:
+        return hashlib.md5(self._save()).hexdigest()
+
+    def write_to_db(self, db: str) -> None:
+        if self.model is None:
+            raise Exception("Must Write Model First")
+
+        model_data = self._save()
+        model_md5 = self._hash()
+        model_params = str(self.model_params)
+        model_type = self.classname
+        created_on = datetime.now()
+
+        engine = create_engine('sqlite:///' + db)  # SQLite connection string
+        Base.metadata.create_all(engine)
+        Session = sessionmaker(bind=engine)
+        session = Session()
+
+        model_entry = Model(
+            model_data=model_data,
+            model_md5=model_md5,
+            model_params=model_params,
+            model_type=model_type,
+            created_on=created_on
+        )
+
+        session.add(model_entry)
+        session.commit()
+        session.close()
+
+    def load_model(self, db: str, id: int) -> object:
+        engine = create_engine('sqlite:///' + db)  # SQLite connection string
+        Base.metadata.create_all(engine)
+        Session = sessionmaker(bind=engine)
+        session = Session()
+
+        model_entry = session.query(Model).filter_by(id=id).first()
+        if model_entry:
+            loaded_model = pickle.loads(model_entry.model_data)
+        else:
+            loaded_model = None
+
+        session.close()
+        return loaded_model
     
-#joblib.dump(model, name + ".joblib")
-#parameters = model.get_params()
-#time = datetime.now()
+    def load_top_n_rows(self, db: str, n: int) -> pd.DataFrame:
+        engine = create_engine('sqlite:///' + db)  # SQLite connection string
+        Base.metadata.create_all(engine)
+        Session = sessionmaker(bind=engine)
+        session = Session()
+
+        query = session.query(Model).limit(n)
+        df = pd.read_sql(query.statement, query.session.bind)
+
+        session.close()
+        return df
