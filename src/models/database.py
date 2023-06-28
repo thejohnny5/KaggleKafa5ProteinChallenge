@@ -18,6 +18,16 @@ cursor.execute('''
 
     )
 ''')
+cursor.execute('''
+    CREATE TABLE IF NOT EXISTS metrics (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        model_id INT,
+        roc_accuracy FLOAT,
+        created_on TIMESTAMP,
+        CONSTRAINT unique_model_roc UNIQUE (model_id, roc_accuracy)
+
+    )
+''')   
 
 # Create additional tables or perform other necessary operations
 
